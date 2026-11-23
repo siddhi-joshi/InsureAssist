@@ -2,7 +2,7 @@
 
 <p align="center"><strong>A calm, local-first insurance operations workspace.</strong><br/>Policies, claims, renewals and support records in one practical interface.</p>
 
-<p align="center"><img src="docs/insureassist-overview.svg" alt="Abstract InsureAssist insurance operations illustration" width="100%"/></p>
+<p align="center"><img src="docs/insureassist-overview.svg" alt="Abstract InsureAssist insurance operations" width="100%"/></p>
 
 <p align="center"><sub>Editorial product illustration; the running application renders only records from its local database.</sub></p>
 
