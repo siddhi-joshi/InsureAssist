@@ -1,109 +1,20 @@
-import { Activity, ClipboardList, ShieldCheck, Ticket } from 'lucide-react'
+import { Activity, AlertCircle, ArrowUpRight, CalendarClock, CheckCircle2, ClipboardList, FileText, ShieldCheck, Ticket } from 'lucide-react'
 import { BlurFade, NumberTicker, SpotlightCard } from '../../components/reactbits'
-import { ClaimRow, EmptyState, MetricCard, PolicyRow, SectionHeading } from '../../components/ui/Common'
+import { EmptyState, SectionHeading } from '../../components/ui/Common'
+
+const relativeTime = value => { if (!value) return 'Recently'; const time = new Date(value).getTime(); if (Number.isNaN(time)) return value; const minutes = Math.max(1, Math.round((Date.now() - time) / 60000)); return minutes < 60 ? `${minutes}m ago` : minutes < 1440 ? `${Math.round(minutes / 60)}h ago` : `${Math.round(minutes / 1440)}d ago` }
+const statusLabel = value => value || 'Unknown'
 
 export function OverviewPage({ data, onNavigate }) {
-  const activePolicies = data.policies.filter((item) => item.status.toLowerCase() === 'active').length
-  const openTickets = data.tickets.filter((item) => item.status === 'Open').length
-  const metricProps = { NumberTicker, SpotlightCard }
-  return (
-    <div className="space-y-6">
-      <div className="hero-card">
-        <div className="relative max-w-xl">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] text-teal-100">
-            <ShieldCheck size={13} className="text-teal-200" /> Insurance workspace
-          </div>
-          <h2>
-            Good morning, <span className="text-teal-200">{data.customer.name.split(' ')[0]}.</span>
-          </h2>
-          <p>A considered view of your cover, open cases, and the next action that matters.</p>
-        </div>
-        <div className="hero-seal">
-          <ShieldCheck size={30} />
-          <span>IA</span>
-        </div>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          {...metricProps}
-          icon={ShieldCheck}
-          label="Active policies"
-          value={activePolicies}
-          detail={`${data.policies.length} total records`}
-          tone="teal"
-        />
-        <MetricCard
-          {...metricProps}
-          icon={ClipboardList}
-          label="Open claims"
-          value={data.claims.length}
-          detail="Live workspace records"
-          tone="orange"
-        />
-        <MetricCard
-          {...metricProps}
-          icon={Ticket}
-          label="Support tickets"
-          value={openTickets}
-          detail={`${data.tickets.length} total tickets`}
-          tone="violet"
-        />
-        <MetricCard
-          {...metricProps}
-          icon={Activity}
-          label="Data connection"
-          value="100"
-          suffix="%"
-          detail="Database connected"
-          tone="blue"
-        />
-      </div>
-      <div className="grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
-        <SpotlightCard className="panel p-5 sm:p-6">
-          <SectionHeading
-            icon={ClipboardList}
-            title="Recent claims"
-            action="View all"
-            onClick={() => onNavigate('claims')}
-          />
-          {data.claims.length ? (
-            <div className="mt-5 divide-y divide-slate-100">
-              {data.claims.slice(0, 4).map((claim) => (
-                <ClaimRow key={claim.id} claim={claim} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={ClipboardList}
-              text="No claims have been added yet."
-              action="Open Claims"
-              onClick={() => onNavigate('claims')}
-            />
-          )}
-        </SpotlightCard>
-        <SpotlightCard className="panel p-5 sm:p-6" glow="orange">
-          <SectionHeading
-            icon={ShieldCheck}
-            title="Policy snapshot"
-            action="Manage"
-            onClick={() => onNavigate('policies')}
-          />
-          {data.policies.length ? (
-            <div className="mt-5 space-y-3">
-              {data.policies.slice(0, 3).map((policy) => (
-                <PolicyRow key={policy.id} policy={policy} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={ShieldCheck}
-              text="No policies have been added yet."
-              action="Add a policy"
-              onClick={() => onNavigate('policies')}
-            />
-          )}
-        </SpotlightCard>
-      </div>
-    </div>
-  )
+  const summary = data.overview || { active_policies: 0, open_claims: 0, pending_renewals: 0, open_tickets: 0, claims_by_status: {}, claims_activity: [], attention: [], activity: [] }
+  const totalStatusClaims = Object.values(summary.claims_by_status).reduce((total, value) => total + value, 0)
+  const chartMax = Math.max(...summary.claims_activity.map(item => item.count), 1)
+  return <div className="space-y-6">
+    <div className="operations-header"><div><div className="section-kicker">OPERATIONS · LIVE WORKSPACE</div><h2>Operations at a glance</h2><p>Manage policies, claims, renewals and support from one place.</p></div><div className="operation-status"><CheckCircle2 size={15} /><div><strong>System operational</strong><span>Database connected</span></div></div></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Kpi label="Active policies" value={summary.active_policies} detail={`${data.policies.length} total records`} icon={ShieldCheck} onClick={() => onNavigate('policies')} /><Kpi label="Claims awaiting review" value={summary.open_claims} detail={summary.open_claims ? 'Requires attention' : 'No pending review'} icon={ClipboardList} tone="attention" onClick={() => onNavigate('claims')} /><Kpi label="Renewals in 30 days" value={summary.pending_renewals} detail={summary.pending_renewals ? 'Review upcoming dates' : 'No upcoming renewals'} icon={CalendarClock} onClick={() => onNavigate('policies')} /><Kpi label="Open support tickets" value={summary.open_tickets} detail={summary.open_tickets ? 'Response needed' : 'No open tickets'} icon={Ticket} onClick={() => onNavigate('support')} /></div>
+    <div className="grid gap-5 xl:grid-cols-[1.35fr_.65fr]"><SpotlightCard className="panel p-5 sm:p-6"><SectionHeading icon={Activity} title="Claims activity" action="View claims" onClick={() => onNavigate('claims')} /><p className="mt-2 text-sm text-slate-500">Submitted claims by week, based on saved records.</p>{summary.claims_activity.length ? <div className="mt-8"><div className="claims-chart">{summary.claims_activity.map(item => <div className="chart-column" key={item.label}><span className="chart-value">{item.count || ''}</span><div className="chart-bar" style={{ height: `${Math.max(item.count / chartMax * 100, item.count ? 14 : 4)}%` }} /><span className="chart-label">{item.label}</span></div>)}</div></div> : <EmptyState icon={Activity} text="Claims activity will appear once claims are submitted." action="Open Claims" onClick={() => onNavigate('claims')} />}</SpotlightCard><SpotlightCard className="panel p-5 sm:p-6"><SectionHeading icon={ClipboardList} title="Claims by status" />{totalStatusClaims ? <div className="mt-5 space-y-4">{Object.entries(summary.claims_by_status).map(([status, count]) => <div key={status}><div className="mb-2 flex items-center justify-between text-sm"><span className="text-slate-600">{statusLabel(status)}</span><strong className="text-[#26251e]">{count}</strong></div><div className="status-track"><div className="status-fill" style={{ width: `${count / totalStatusClaims * 100}%` }} /></div></div>)}</div> : <div className="mini-empty">No claim statuses to summarize.</div>}</SpotlightCard></div>
+    <div className="grid gap-5 xl:grid-cols-[.9fr_1.1fr]"><SpotlightCard className="panel p-5 sm:p-6"><div className="flex items-center justify-between"><div><div className="section-kicker">PRIORITY QUEUE</div><h3 className="mt-1 text-lg font-semibold">Needs your attention</h3></div><span className="count-badge">{summary.attention.length}</span></div>{summary.attention.length ? <div className="mt-5 space-y-3">{summary.attention.map(item => <button key={item.type} onClick={() => onNavigate(item.type === 'claims' ? 'claims' : item.type === 'renewals' ? 'policies' : 'support')} className="attention-row"><span className={`attention-icon ${item.severity}`}><AlertCircle size={16} /></span><span className="min-w-0 flex-1 text-left"><strong>{item.title}</strong><small>{item.detail}</small></span><b>{item.count}</b><ArrowUpRight size={15} /></button>)}</div> : <EmptyState icon={CheckCircle2} text="Nothing needs attention right now." />}</SpotlightCard><SpotlightCard className="panel p-5 sm:p-6"><SectionHeading icon={FileText} title="Recent activity" action="View support" onClick={() => onNavigate('support')} />{summary.activity.length ? <div className="mt-4 divide-y divide-slate-100">{summary.activity.map(item => <div className="activity-row" key={item.id}><span className={`activity-dot ${item.kind}`} /><div className="min-w-0 flex-1"><strong>{item.title}</strong><small>{item.detail}</small></div><time>{relativeTime(item.happened_at)}</time></div>)}</div> : <EmptyState icon={FileText} text="New claims, policies and tickets will appear here." />}</SpotlightCard></div>
+  </div>
 }
+
+function Kpi({ label, value, detail, icon: Icon, tone = 'default', onClick }) { return <button onClick={onClick} className={`kpi-panel ${tone}`}><span className="kpi-icon"><Icon size={17} /></span><span className="kpi-copy"><small>{label}</small><strong><NumberTicker value={value} /></strong><em>{detail}</em></span><ArrowUpRight className="kpi-arrow" size={15} /></button> }

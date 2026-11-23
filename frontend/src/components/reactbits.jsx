@@ -10,7 +10,11 @@ export function Aurora({ className = '' }) {
 }
 
 export function SpotlightCard({ children, className = '', glow = 'teal' }) {
-  return <motion.div className={`spotlight-card group relative overflow-hidden ${glow} ${className}`}>{children}</motion.div>
+  return (
+    <motion.div className={`spotlight-card group relative overflow-hidden ${glow} ${className}`}>
+      {children}
+    </motion.div>
+  )
 }
 
 export function ShinyText({ children, className = '' }) {

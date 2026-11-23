@@ -69,12 +69,19 @@ function renderPage(tab, data, navigate, openModal) {
 }
 function LoadingState() {
   return (
-    <div className="grid min-h-screen place-items-center bg-[#071b1a] text-white">
-      <div className="text-center">
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-teal-400/10 text-teal-300">
-          <span className="status-dot" />
+    <div className="loading-screen">
+      <div className="loading-panel">
+        <div className="loading-art-wrap">
+          <img src="/insureassist-loading.png" alt="Preparing insurance records" className="loading-art" />
         </div>
-        <p className="text-sm text-white/60">Loading your workspace…</p>
+        <div className="loading-copy">
+          <span className="loading-kicker">INSUREASSIST</span>
+          <h1>Preparing your workspace</h1>
+          <p>Connecting policies, claims, and support records.</p>
+          <div className="loading-progress">
+            <span />
+          </div>
+        </div>
       </div>
     </div>
   )
